@@ -1,0 +1,3 @@
+##gff-version 3
+chromosome1 challenge       gene    10     20    .       +       .       ID=geneA1;Name=geneA1
+chromosome2 challenge       gene    5     10    .       +       .       ID=geneA2;Name=geneA2

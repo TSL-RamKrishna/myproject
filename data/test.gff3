@@ -1,0 +1,10 @@
+##gff-version 3
+chromosomeB6633	challenge	gene	423	1415	.	+	.	ID=geneB1;Name=geneB1
+chromosomeB6633	challenge	mRNA	423	1415	.	+	.	ID=transcriptB1;Name=transcriptB1;Parent=geneB1
+chromosomeB6633	challenge	exon	423	1415	.	+	.	ID=transcriptB1.exon.1;Name=transcriptB1.exon.1;Parent=transcriptB1
+chromosomeB6633	challenge	CDS	423	1415	.	+	0	ID=transcriptB1.CDS.1;Name=transcriptB1.CDS.1;Parent=transcriptB1
+chromosomeB36578	challenge	gene	372	1630	.	-	.	ID=geneB2;Name=geneB2
+chromosomeB36578	challenge	mRNA	372	1630	.	-	.	ID=transcriptB2;Name=transcriptB2;Parent=geneB2
+chromosomeB36578	challenge	exon	1394	1630	.	-	.	ID=transcriptB2.exon.1;Name=transcriptB2.exon.1;Parent=transcriptB2
+chromosomeB36578	challenge	exon	1107	1226	.	-	.	ID=transcriptB2.exon.2;Name=transcriptB2.exon.2;Parent=transcriptB2
+chromosomeB36578	challenge	exon	860	971	.	-	.	ID=transcriptB2.exon.3;Name=transcriptB2.exon.3;Parent=transcriptB2

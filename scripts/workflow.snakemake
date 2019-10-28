@@ -1,0 +1,33 @@
+#!/usr/bin/env snakemake
+
+
+
+rule extract_genes:
+    input:
+        assembly = data/{species}.chromosome.fasta,
+        gff = data/{species}.gff3
+    output:
+        data/{species}_geneseqs.fasta
+    script:
+        "python scripts/extract_genomic_sequence.py {input.assembly} {output}"
+
+
+rule makeblastdb:
+    input:
+        data/{species}_geneseqs.fasta
+    output:
+        data/{species}_geneseqs.fasta.nin,
+        data/{species}_geneseqs.fasta.nhr,
+        data/{species}_geneseqs.fasta.nsq
+    shell:
+        "makeblastdb -in {input} -out {input} -dbtype nucl"
+
+rule blast_align:
+    input:
+        gene = data/{speciesA}_geneseqs.fasta
+        transcript = data/{speciesB}.transcript.fasta
+        blastdb = data/{speciesA}_geneseqs.fasta.nin, data/{speciesA}_geneseqs.fasta.nhr, data/{speciesA}_geneseqs.fasta.nsq
+    output:
+        results/{speciesB}_transcripts_align_{speciesA}genes.txt
+    shell:
+        "blastn -query {input.transcript} -db {input.gene} -outfmt 6 -outfile {output}"
