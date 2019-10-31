@@ -59,4 +59,7 @@ def get_blast_data(blast_outfile):
 
 
 if __name__=='__main__':
-    print(get_blast_data(sys.argv[1]))
+
+    result = get_blast_data(sys.argv[1])
+    for transcript in result.keys():
+        print(transcript, result[transcript])

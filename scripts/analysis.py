@@ -23,7 +23,84 @@ def parse_blast_result(blastfile):
 
 def parse_gff_data(gff_file):
     annotation_data = gff3(gff_file)
-    return annotation_data.get_positions()
+    annotation_data.get_positions()
+    return annotation_data.get_transcript_data(), annotation.get_gene_data()
+
+def total_length_of_allfeatures(list_of_positions_start_end):
+    # this return the total length of exons/cds
+    total=0
+    for a, b in list_of_positions_start_end:
+        total += abs(b-a + 1)  # get absolute value, works if strand is + or -
+
+    return return
+
+def is_center_left(a1,b1,a2,b2):
+    if a1>a2:
+        return True
+
+    return None
+
+def is_a_in_b(a, b):
+    # a and b are range
+    # return is range a is in range b
+    if a[0] >= b[0] and a[1] <=b[1]:
+        return True
+
+def right_overlap(a,b):
+    if a[0] < b[0] and a[1] <=b[1]:
+        return True
+def left_overlap(a,b):
+    if a[0] >=b[0] and a[0] < b[1] and a[1] > b[1]:
+        return True
+def a_completely_overlaps_b(a,b):
+    if a[0] <= b[0]  and a[1] >= b[1]:
+        return True
+    else:
+        return False
+
+def all_jxn_match(transcript_a_aln_positions, gene_b_aln_positions):
+    if len(transcript_a_aln_positions) == len(gene_b_aln_positions) and (transcript_a_aln_positions[0]<gene_b_aln_positions[1] and transcript_a_aln_positions[1] > gene_b_aln_positions[0]):
+        return True
+
+def source_contained(transcript_a_aln_positions, gene_b_aln_positions):
+    # if not all_jxn_match, lets look other
+    total_contained=0
+    for a1, b1 in transcript_a_aln_positions:
+        for a2, b2 in gene_b_aln_positions:
+            if a1 > b2 :
+                continue
+            elif is_a_in_b([a1,b1], [a2,b2]):
+                total_contained+=1
+            else:
+                pass
+    if total_contained == len(transcript_a_aln_positions):
+        return True
+
+def target_contained(transcript_a_aln_positions, gene_b_aln_positions):
+    total_contained=0
+    for a1, b1 in transcript_a_aln_positions:
+        for a2, b2 in gene_b_aln_positions:
+            if is_a_in_b([a1, b1], [a2,b2]) or right_overlap([a1, b1], [a2,b2]) or left_overlap([a1, b1], [a2,b2]):
+                total_contained+=1
+            else:
+                pass
+    if len(transcript_a_aln_positions) >= total_contained and total_contained >=1:
+        return True
+
+
+def is_unique_transcript(transcript_a_aln_positions, gene_b_aln_positions):
+    if all_jxn_match(transcript_a_aln_positions, gene_b_aln_positions):
+        return 'all_jxn_match'
+
+    elif source_contained(transcript_a_aln_positions, gene_b_aln_positions):
+        return 'source_contained'
+    elif target_contained(transcript_a_aln_positions, gene_b_aln_positions):
+        return 'target_contained'
+
+
+
+def is_multiple_transcript(transcript_a, transcript_a_all_aligned_genes):
+
 
 def get_transcript_details_from_gene(gene):
     pass
@@ -44,20 +121,24 @@ def homology_analysis(blastAB, blastBA, gffA, gffB):
 
     #print(speciesA_blast_speciesBgenes)
     #print(speciesB_blast_speciesAgenes)
-    A_gff_data = parse_gff_data(gffA)
-    B_gff_data = parse_gff_data(gffB)
-
-    print(A_gff_data)
-    print(B_gff_data)
+    A_gff_transcript_data, A_gff_gene_data = parse_gff_data(gffA)
+    B_gff_transcript_data, B_gff_gene_data = parse_gff_data(gffB)
 
     # checking A transcripts homology to B transcript
 
     for transcript_a in speciesA_blast_speciesBgenes.keys():
         print(transcript_a)
 
+        transcript_a_gene = A_gff_transcript_data[transcript_a]['gene']
+        transcript_a_gene_start = A_gff_gene_data[transcript_a_gene]['start']
+        transcript_a_gene_end = A_gff_gene_data[transcript_a_gene]['end']
+        transcript_a_allfeatures_positions = sorted(set( get_exon_positions_starting_1(A_gff_transcript_data[transcript_a]['allfeatures'], transcript_a_gene_start ) ))
+
+        # list of B genes that transcript_a aligned to
+        list_of_b_genes = speciesA_blast_speciesBgenes[transcript_a].keys()
         for b_gene_aligned_to in speciesA_blast_speciesBgenes[transcript_a].keys():
 
-            print(transcript_a, " aligned to ", b_gene_aligned_to)
+            #print(transcript_a, " aligned to ", b_gene_aligned_to)
 
 
             b_gene_aln_start_pos = speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['start']
@@ -69,12 +150,12 @@ def homology_analysis(blastAB, blastBA, gffA, gffB):
 
             total_aligned_positions = len(b_gene_aln_start_pos )
 
-            print("transcript ", transcript_a, transcript_aln_pos, " gene ", b_gene_aligned_to, b_gene_aln_pos)
-            b_gene_transcript = B_gff_data[b_gene_aligned_to]['transcript']
-            b_gene_transcript_exon_positions = B_gff_data[b_gene_aligned_to][b_gene_transcript]['exon']
-            b_gene_transcript_allfeatures = B_gff_data[b_gene_aligned_to][b_gene_transcript]['allfeatures']
+            #print("transcript ", transcript_a, transcript_aln_pos, " gene ", b_gene_aligned_to, b_gene_aln_pos)
+            b_gene_transcript = B_gff_gene_data[b_gene_aligned_to]['transcript']
+            b_gene_transcript_exon_positions = B_gff_gene_data[b_gene_aligned_to][b_gene_transcript]['exon']
+            b_gene_transcript_allfeatures = B_gff_gene_data[b_gene_aligned_to][b_gene_transcript]['allfeatures']
 
-            b_gene_chr_start_pos, b_gene_chr_end_pos = B_gff_data[b_gene_aligned_to]['start'],B_gff_data[b_gene_aligned_to]['end']
+            b_gene_chr_start_pos, b_gene_chr_end_pos = B_gff_gene_data[b_gene_aligned_to]['start'],B_gff_gene_data[b_gene_aligned_to]['end']
             # positions are paired [start, end]
             # these positions are with respective to the chromosome position
 
@@ -82,10 +163,11 @@ def homology_analysis(blastAB, blastBA, gffA, gffB):
             b_gene_transcript_allfeatures_starting_1 = sorted( set( get_exon_positions_starting_1(b_gene_transcript_allfeatures, b_gene_chr_start_pos) ) )
 
 
-            b_gene_chromosome = B_gff_data[b_gene_aligned_to]['chr']
-            b_gene_strand = B_gff_data[b_gene_aligned_to]['strand']
+            b_gene_chromosome = B_gff_gene_data[b_gene_aligned_to]['chr']
+            b_gene_strand = B_gff_gene_data[b_gene_aligned_to]['strand']
 
-            print("B gene chr ",b_gene_chromosome, " transcript ", b_gene_transcript, " allfeatures ", b_gene_transcript_allfeatures, b_gene_transcript_allfeatures_starting_1)
+            if b_gene_aln_pos == b_gene_transcript_allfeatures_starting_1:
+                print("B gene chr ",b_gene_chromosome, " transcript ", b_gene_transcript, " allfeatures ", b_gene_transcript_allfeatures, b_gene_transcript_allfeatures_starting_1)
             # for align_position in range(total_aligned_positions):
             #     a_start = speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['start'][align_position]
             #     a_end = speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['end'][align_position]
@@ -113,7 +195,8 @@ if __name__=='__main__':
 
     options=parser.parse_args()
     #print(options)
-    homology_analysis("results/test_A_transcripts_align_Bgenes.txt","results/test_B_transcripts_align_Agenes.txt","data/testA.gff3","data/testB.gff3")
+    #homology_analysis("results/test_A_transcripts_align_Bgenes.txt","results/test_B_transcripts_align_Agenes.txt","data/testA.gff3","data/testB.gff3")
+    homology_analysis("results/A_transcripts_align_Bgenes.txt", "results/B_transcripts_align_Agenes.txt", "data/A.gff3", "data/B.gff3")
 
 
     exit(0)

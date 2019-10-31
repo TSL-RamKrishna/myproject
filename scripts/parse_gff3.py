@@ -24,6 +24,7 @@ class gff3():
         '''
         self.in_file_gff3 = gff3
         self.gene_data=dict()
+        self.transcript_data=dict()
 
     def parseGFFAttributes(self, attributeString):
         """Parse the GFF3 attribute column and return a dict"""#
@@ -71,10 +72,17 @@ class gff3():
                 self.gene_data[feature_id] = {'start':start, 'end':end, 'strand':strand, 'chr':chromosome}
                 last_geneid = feature_id
             elif 'RNA' in feature or 'rna' in feature.lower():
-                self.gene_data[last_geneid].update({'transcript': feature_id,  feature_id:{'start':start, 'end':end, 'allfeatures':[]}})
+                self.transcript_data[feature_id]={'start':start, 'end': end, 'gene':parent_id   , 'allfeatures': [], 'strand':strand}
+                if 'transcript' in self.gene_data[last_geneid].keys():
+                    self.gene_data[last_geneid]['transcript'].append(feature_id)
+                else:
+                    self.gene_data[last_geneid]['transcript'] = [feature_id]
+
+                self.gene_data[last_geneid].update({feature_id:{'start':start, 'end':end, 'allfeatures':[]}})
                 last_transcript = feature_id
             else:
                 # add all other features start and end to one array
+                self.transcript_data[last_transcript]['allfeatures'].append((start, end))
                 self.gene_data[last_geneid][last_transcript]['allfeatures'].append((start, end))
 
                 if feature in self.gene_data[last_geneid][last_transcript].keys():
@@ -82,7 +90,7 @@ class gff3():
                 else:
                     self.gene_data[last_geneid][last_transcript].update({feature:[(start,end)]})
 
-        return self.gene_data
+
 
     def save_coordinates(self, outfilename):
         '''
@@ -90,22 +98,31 @@ class gff3():
         in json format in the filename provided
         '''
         print("Saving dict object in json")
-        if len(self.gene_data) == 0:
+        if len(self.transcript_data) == 0:
             self.get_positions()
         with open(outfilename, 'w') as outfile:
-            json.dump(self.gene_data, outfile)
+            json.dump(self.transcript_data, outfile)
     def print_coordinates(self):
         '''
         prints the dict object containing attribute positions
         in json format on screen
         '''
-        if len(self.gene_data) == 0:
+        if len(self.transcript_data) == 0:
             self.get_positions()
-        print(json.dumps(self.gene_data, indent=4, sort_keys=True))
+        print(json.dumps(self.transcript_data, indent=4, sort_keys=True))
+
+    def get_transcript_data(self):
+        return self.transcript_data
+
+    def get_gene_data(self):
+        return self.gene_data
 
 
 if __name__=='__main__':
 
     sample=gff3(sys.argv[1])
     #sample.save_coordinates('output.json')
-    sample.print_coordinates()
+    sample.get_positions()
+    print(sample.get_transcript_data() )
+
+    print(sample.get_gene_data())
