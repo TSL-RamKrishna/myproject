@@ -30,3 +30,12 @@ chromosomeA4	challenge	exon	22928289	22928493	.	-	.	ID=transcriptA22405.exon.13;
 chromosomeA4	challenge	five_prime_UTR	22928289	22928493	.	-	.	ID=transcriptA22405.five_prime_UTR.5;Name=transcriptA22405.five_prime_UTR.5;Parent=transcriptA22405
 chromosomeA4	challenge	exon	22930062	22930565	.	-	.	ID=transcriptA22405.exon.14;Name=transcriptA22405.exon.14;Parent=transcriptA22405
 chromosomeA4	challenge	five_prime_UTR	22930062	22930565	.	-	.	ID=transcriptA22405.five_prime_UTR.6;Name=transcriptA22405.five_prime_UTR.6;Parent=transcriptA22405
+chromosomeA4    challenge       mRNA    22917252        22930565        .       -       .       ID=transcriptA405;Name=transcriptA405;Parent=geneA20676
+chromosomeA4    challenge       three_prime_UTR 22917252        22917443        .       -       .       ID=transcriptA405.three_prime_UTR.1;Name=transcriptA405.three_prime_UTR.1;Parent=transcriptA405
+chromosomeA4    challenge       exon    22917252        22917773        .       -       .       ID=transcriptA405.exon.1;Name=transcriptA405.exon.1;Parent=transcriptA405
+chromosomeA4    challenge       CDS     22917444        22917773        .       -       0       ID=transcriptA405.CDS.1;Name=transcriptA405.CDS.1;Parent=transcriptA405
+chromosomeA4    challenge       exon    22918280        22918406        .       -       .       ID=transcriptA405.exon.2;Name=transcriptA405.exon.2;Parent=transcriptA405
+chromosomeA4    challenge       CDS     22918280        22918406        .       -       1       ID=transcriptA405.CDS.2;Name=transcriptA405.CDS.2;Parent=transcriptA405
+chromosomeA4    challenge       exon    22918481        22919238        .       -       .       ID=transcriptA405.exon.3;Name=transcriptA405.exon.3;Parent=transcriptA405
+chromosomeA4    challenge       CDS     22918481        22919238        .       -       0       ID=transcriptA405.CDS.3;Name=transcriptA405.CDS.3;Parent=transcriptA405
+chromosomeA4    challenge       exon    22919321        22919497        .       -       .       ID=transcriptA405.exon.4;Name=transcriptA405.exon.4;Parent=transcriptA405
