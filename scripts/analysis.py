@@ -34,83 +34,181 @@ def total_length_of_allfeatures(list_of_positions_start_end):
 
     return total
 
+def is_exon_exact_match(source_exon, target_exon):
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if a1 == a2 and b1 == b2:
+        return
+
+def is_exon_right_justified(source_exon, target_exon):
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if b1 == b2 and a1 < a2:
+        return True
+
+def is_exon_left_justified(source_exon, target_exon):
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if a1 == a2 and b1 > b2:
+        return True
+
+def is_source_exon_longer(source_exon, target_exon):
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if b2-a2 > b1-a1:
+        return True
+
+def is_target_exon_longer(source_exon, target_exon):
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if b1-a1 > b2-a2:
+        return True
+
+def is_source_exon_overlap_longer_than_target_exon(source_exon, target_exon):
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if(a2 < a1 and b2 > b1):
+        return True
+
+def is_novel_retained_intron(target_exon1, target_exon2, source_exon):
+    # this is true if there is intron in between two target exons or source mapped across all target exons
+    a1,b1=target_exon1
+    a2,b2=target_exon2
+    a3,b3=source_exon
+
+    # test if there is intron in between target exon1 and target exon2
+    if (b3 == b2 and a3 < b1) or (a3==a1 and b3 < b2):
+        return True
+    # if (a1==a3 or b2==b3) and (b3-a3 > b1-a1 or b3-a3 > b2-a2):
+    #     return True
+    # test if source exon mapped across all first and last exons
+    elif a3 < a1 and b3 > b2:
+        return True
+
+def is_changed_exon_incl_kept_intron(target_exon1, target_exon2, source_exon):
+    # test if there is intron between target exons and source exon overlaps more than target exons
+    a1,b1 = target_exon1
+    a2,b2 = target_exon2
+    a3,b3 = source_exon
+
+    if (a3 < a1 or b3 > b2):
+        return True
+    elif (a3 < b1 and b3 > a2):
+        return True
+
+
+def is_changed_exon(target_exon, source_exon):
+    # test if all source exons overlap target exons
+    a1,b1 = target_exon
+    a2,b2 = source_exon
+
+    pass
+
 def is_center_left(a1,b1,a2,b2):
     if a1>a2:
         return True
 
     return None
 
-def is_a_in_b(a, b):
+def is_a_in_b(source, target):
     # a and b are range
     # return is range a is in range b
-    if a[0] >= b[0] and a[1] <=b[1]:
+    if source[0] >= target[0] and source[1] <= target[1]:
         return True
 
-def right_overlap(a,b):
-    if a[0] < b[0] and a[1] <=b[1]:
+def right_overlap(source, target):
+    if source[0] < target[0] and source[1] <= target[1]:
         return True
-def left_overlap(a,b):
-    if a[0] >=b[0] and a[0] < b[1] and a[1] > b[1]:
+def left_overlap(source, target):
+    if source[0] >=target[0] and source[0] < target[1] and source[1] >= target[1]:
         return True
-def a_completely_overlaps_b(a,b):
-    if a[0] <= b[0]  and a[1] >= b[1]:
+def a_completely_overlaps_b(source, target):
+    if source[0] <= target[0]  and source[1] >= target[1]:
         return True
     else:
         return False
 
-def all_jxn_match(transcript_a_aln_positions, gene_b_aln_positions):
-    if len(transcript_a_aln_positions) == len(gene_b_aln_positions):
-        a1, b1 =  transcript_a_aln_positions[0]
-        a2, b2 = gene_b_aln_positions[0]
+def exact_match(source_positions, target_positions):
+    total = 0
+    for i in range(len(source_positions)):
+        if is_exon_exact_match(source_positions[i], target_positions[i]):
+            total +=1
+    if total == len(source_positions):
+        return True
 
-        if a1 <= b2 and b1 >=a2:
+def all_jxn_match(source_positions, target_positions):
+
+    if len(source_positions) == len(target_positions):
+        counter=0
+        for i in range(len(source_positions)):
+
+            a1, b1 =  source_positions[i]
+            a2, b2 = target_positions[i]
+
+            if a1 <= b2 and b1 >=a2:
+                counter+=1
+        if counter==len(source_positions):
             return True
 
-def source_contained(transcript_a_aln_positions, gene_b_aln_positions):
+def source_contained(source_positions, target_positions):
     # if not all_jxn_match, lets look other
     total_contained=0
-    for a1, b1 in transcript_a_aln_positions:
-        for a2, b2 in gene_b_aln_positions:
-            if a1 > b2 :
-                continue
-            elif is_a_in_b([a1,b1], [a2,b2]):
-                total_contained+=1
-            else:
-                pass
-    if total_contained == len(transcript_a_aln_positions):
-        return True
+    if len(source_positions) < len(target_positions):
+        for i in range(len(source_positions)):
+            if is_exon_exact_match(target_positions[i], source_positions[i]) or is_exon_left_justified(target_positions[i], source_positions[i]) or is_exon_right_justified(target_positions[i], source_positions[i]):
+                total_contained=0
 
-def target_contained(transcript_a_aln_positions, gene_b_aln_positions):
+        if total_contained == len(source_positions):
+            return True
+
+
+def target_contained(source_positions, target_positions):
     total_contained=0
-    for a1, b1 in transcript_a_aln_positions:
-        for a2, b2 in gene_b_aln_positions:
-            if is_a_in_b([a1, b1], [a2,b2]) or right_overlap([a1, b1], [a2,b2]) or left_overlap([a1, b1], [a2,b2]):
+
+    for target_exon in target_positions:
+        for source_exon in source_positions:
+            if is_a_in_b(target_exon, source_exon):
                 total_contained+=1
             else:
                 pass
-    if len(transcript_a_aln_positions) >= total_contained and total_contained >=1:
+    if len(source_positions) >= total_contained and total_contained >=1:
         return True
 
 
-def is_unique_transcript(transcript_a_aln_positions, gene_b_aln_positions):
-    if transcript_a_aln_positions == gene_b_aln_positions:
+def unique_transcript(source_positions, target_positions):
+    if len(source_positions) ==1 and  len(target_positions) ==1  and source_positions == target_positions:
+        return 'mono_exonic'
+    elif exact_match(source_positions, target_positions):
         return 'exact_match'
-    elif all_jxn_match(transcript_a_aln_positions, gene_b_aln_positions):
+    elif all_jxn_match(source_positions, target_positions):
         return 'all_jxn_match'
-
-    elif source_contained(transcript_a_aln_positions, gene_b_aln_positions):
+    elif source_contained(source_positions, target_positions):
         return 'source_contained'
-    elif target_contained(transcript_a_aln_positions, gene_b_aln_positions):
+    elif target_contained(source_positions, target_positions):
         return 'target_contained'
 
 
+def novel_retained_intron(source_positions, target_positions):
+    # test if transcript a has aligned to intronic region of transcript b,
+    # getting pair of exonic positions from transcript b
 
-def is_multiple_transcript(transcript_a, transcript_a_all_aligned_genes):
-    pass
+    transcript_b_aln_positions_paired = [(target_positions[i-1], target_positions[i]) for i in range(1, len(target_positions))]
 
+    for exon1, exon2 in transcript_b_aln_positions_paired:
+        for source_exon in source_positions:
+            if is_novel_retained_intron(exon1, exon2, source_exon):
+                return True
 
-def get_transcript_details_from_gene(gene):
-    pass
+    # test if source might align across all exons and introns of target
+    if len(source_positions)>=2 and is_novel_retained_intron(target_positions[0], target_positions[-1], source_positions):
+        return True
+
+def changed_exon(source_positions, target_positions):
+    number_of_source_exons = len(source_positions)
+
+    for source_exon in source_positions:
+
+    return
 
 def get_exon_positions_starting_1(chr_exon_positions, chr_transcript_start_pos):
     # return the exon positions starting from 1, not in chromosome
@@ -179,18 +277,23 @@ def homology_analysis(blastAB, blastBA, gffA, gffB):
                 b_gene_strand = B_gff_gene_data[b_gene_aligned_to]['strand']
 
                 print(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1)
-                unique_transcript_call = is_unique_transcript(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1)
+                unique_transcript_call = unique_transcript(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1)
                 if unique_transcript_call:
-                    print(transcript_a, b_gene_transcript, 'unique_transcript', transcript_a_gene, b_gene_aligned_to, unique_transcript_call)
-                # if b_gene_aln_pos == b_gene_transcript_allfeatures_starting_1:
-                #     print("B gene chr ",b_gene_chromosome, " transcript ", b_gene_transcript, " allfeatures ", b_gene_transcript_allfeatures, b_gene_transcript_allfeatures_starting_1)
-                # for align_position in range(total_aligned_positions):
-                #     a_start = speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['start'][align_position]
-                #     a_end = speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['end'][align_position]
-                #     b_start = speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to][transcript_a]['start'][align_position]
-                #     b_end = speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to][transcript_a]['end'][align_position]
-                #
-                #     print("Transcript " , transcript_a, " aligned ", a_start, a_end, b_start, b_end )
+                    speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call']='unique_transcript'
+                    speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['category']=unique_transcript_call
+
+                    continue
+
+                if novel_retained_intron(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
+                    speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call']='novel_retained_intron'
+                    continue
+
+                if is_changed_exon_incl_kept_intron(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
+                    speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call']='is_changed_exon_incl_kept_intron'
+                    continue
+                if changed_exon(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
+                    speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call']='changed_exon'
+                    continue
 
 
 
