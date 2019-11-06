@@ -35,39 +35,78 @@ def total_length_of_allfeatures(list_of_positions_start_end):
     return total
 
 def is_exon_exact_match(source_exon, target_exon):
+    # ---------
+    # ---------
     a1,b1=target_exon
     a2,b2=source_exon
     if a1 == a2 and b1 == b2:
         return
 
-def is_exon_right_justified(source_exon, target_exon):
+def is_source_exon_right_equal_left_longer(source_exon, target_exon):
+    #  ----------------------
+    #       -----------------
+
     a1,b1=target_exon
     a2,b2=source_exon
-    if b1 == b2 and a1 < a2:
+    if a1 < a2 < b1 == b2:
         return True
 
-def is_exon_left_justified(source_exon, target_exon):
+def is_source_exon_right_longer_left_longer(source_exon, target_exon):
+    #  ------------------
+    #      -----------------
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if a1 < a2 < b1 < b2:
+        return True
+
+def is_source_exon_left_equal_right_shorter(source_exon, target_exon):
+    # --------------------
+    # ----------------
     a1,b1=target_exon
     a2,b2=source_exon
     if a1 == a2 and b1 > b2:
         return True
 
-def is_source_exon_longer(source_exon, target_exon):
+def is_source_exon_left_shorter_right_shorter(source_exon, target_exon):
+    #     ------------------
+    # ------------------
     a1,b1=target_exon
     a2,b2=source_exon
-    if b2-a2 > b1-a1:
+
+    if a2 < a1 < b2 < b1:
+        return True
+
+def is_source_exon_longer_both_sides(source_exon, target_exon):
+    #     a1 --------- b1
+    # a2------------------ b2
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if a2 < a1 < b1 < b2:
         return True
 
 def is_target_exon_longer(source_exon, target_exon):
+    #  a1------------------b1
+    #     a2------------b2
     a1,b1=target_exon
     a2,b2=source_exon
-    if b1-a1 > b2-a2:
+    if a1 < a2 <b2 < b1:
         return True
 
-def is_source_exon_overlap_longer_than_target_exon(source_exon, target_exon):
-    a1,b1=target_exon
-    a2,b2=source_exon
-    if(a2 < a1 and b2 > b1):
+def is_source_exon_in_target_exon(source, target):
+    #  -----------   ------------
+    #    -------     ------------
+    if source[0] >= target[0] and source[1] <= target[1]:
+        return True
+
+
+def right_overlap(source, target):
+    if source[0] < target[0] and source[1] <= target[1]:
+        return True
+def left_overlap(source, target):
+    if source[0] >=target[0] and source[0] < target[1] and source[1] >= target[1]:
+        return True
+def a_completely_overlaps_b(source, target):
+    if source[0] <= target[0]  and source[1] >= target[1]:
         return True
 
 def is_novel_retained_intron(target_exon1, target_exon2, source_exon):
@@ -97,44 +136,22 @@ def is_changed_exon_incl_kept_intron(target_exon1, target_exon2, source_exon):
         return True
 
 
-def is_changed_exon(target_exon, source_exon):
+def is_changed_exon(source_exon, target_exon):
+    # The source transcript contains exons which overlap target transcript exons but junctions differ
     # test if all source exons overlap target exons
-    a1,b1 = target_exon
-    a2,b2 = source_exon
 
-    pass
-
-def is_center_left(a1,b1,a2,b2):
-    if a1>a2:
+    if is_source_exon_longer_both_sides(source_exon, target_exon):
         return True
 
-    return None
-
-def is_a_in_b(source, target):
-    # a and b are range
-    # return is range a is in range b
-    if source[0] >= target[0] and source[1] <= target[1]:
-        return True
-
-def right_overlap(source, target):
-    if source[0] < target[0] and source[1] <= target[1]:
-        return True
-def left_overlap(source, target):
-    if source[0] >=target[0] and source[0] < target[1] and source[1] >= target[1]:
-        return True
-def a_completely_overlaps_b(source, target):
-    if source[0] <= target[0]  and source[1] >= target[1]:
-        return True
-    else:
-        return False
 
 def exact_match(source_positions, target_positions):
-    total = 0
-    for i in range(len(source_positions)):
-        if is_exon_exact_match(source_positions[i], target_positions[i]):
-            total +=1
-    if total == len(source_positions):
-        return True
+    if len(source_positions) == len(target_positions):
+        total = 0
+        for i in range(len(source_positions)):
+            if is_exon_exact_match(source_positions[i], target_positions[i]):
+                total +=1
+        if total == len(source_positions):
+            return True
 
 def all_jxn_match(source_positions, target_positions):
 
@@ -155,7 +172,7 @@ def source_contained(source_positions, target_positions):
     total_contained=0
     if len(source_positions) < len(target_positions):
         for i in range(len(source_positions)):
-            if is_exon_exact_match(target_positions[i], source_positions[i]) or is_exon_left_justified(target_positions[i], source_positions[i]) or is_exon_right_justified(target_positions[i], source_positions[i]):
+            if is_exon_exact_match(target_positions[i], source_positions[i]) or is_source_exon_left_equal_right_shorter(target_positions[i], source_positions[i]) or is_source_exon_right_equal_left_longer(target_positions[i], source_positions[i]):
                 total_contained=0
 
         if total_contained == len(source_positions):
@@ -167,7 +184,7 @@ def target_contained(source_positions, target_positions):
 
     for target_exon in target_positions:
         for source_exon in source_positions:
-            if is_a_in_b(target_exon, source_exon):
+            if is_source_exon_in_target_exon(target_exon, source_exon):
                 total_contained+=1
             else:
                 pass
@@ -192,23 +209,41 @@ def novel_retained_intron(source_positions, target_positions):
     # test if transcript a has aligned to intronic region of transcript b,
     # getting pair of exonic positions from transcript b
 
+    total = 0
+    novel_retained_intron = 0
     transcript_b_aln_positions_paired = [(target_positions[i-1], target_positions[i]) for i in range(1, len(target_positions))]
 
     for exon1, exon2 in transcript_b_aln_positions_paired:
         for source_exon in source_positions:
-            if is_novel_retained_intron(exon1, exon2, source_exon):
-                return True
-
+            if source_exon[0] < exon2[1] and is_novel_retained_intron(exon1, exon2, source_exon):
+                novel_retained_intron +=1
+            else:
+                for target_exon in [exon1, exon2]:
+                    if is_exon_exact_match(source_exon, target_exon) or is_source_exon_left_equal(source_exon, target_exon):
+                        total +=1
+                        break
+    if novel_retained_intron > 0 and (total + novel_retained_intron * 2) == lne(target_positions):
+        return True
     # test if source might align across all exons and introns of target
     if len(source_positions)>=2 and is_novel_retained_intron(target_positions[0], target_positions[-1], source_positions):
         return True
 
 def changed_exon(source_positions, target_positions):
-    number_of_source_exons = len(source_positions)
+    # changed_exon : The source transcript contains exons which overlap target transcript exons but junctions differ
+    for target_exon in target_positions:
+        for source_exon in source_positions:
 
-    for source_exon in source_positions:
+            if source_exon[0]<target_exon[1] and  is_changed_exon(source_exon, target_exon):
+                return True
 
-    return
+def changed_exon_incl_kept_intron(source_positions, target_positions):
+    transcript_b_aln_positions_paired = [(target_positions[i-1], target_positions[i]) for i in range(1, len(target_positions))]
+
+    for exon1, exon2 in transcript_b_aln_positions_paired:
+        for source_exon in source_positions:
+            if source_exon[0] < exon2[1] and is_changed_exon_incl_kept_intron(exon1, exon2, source_exon):
+                return True
+
 
 def get_exon_positions_starting_1(chr_exon_positions, chr_transcript_start_pos):
     # return the exon positions starting from 1, not in chromosome
