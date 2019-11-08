@@ -40,7 +40,7 @@ def is_exon_exact_match(source_exon, target_exon):
     a1,b1=target_exon
     a2,b2=source_exon
     if a1 == a2 and b1 == b2:
-        return
+        return True
 
 def is_source_exon_right_equal_left_longer(source_exon, target_exon):
     #  ----------------------
@@ -49,6 +49,15 @@ def is_source_exon_right_equal_left_longer(source_exon, target_exon):
     a1,b1=target_exon
     a2,b2=source_exon
     if a1 < a2 < b1 == b2:
+        return True
+
+def is_source_exon_right_equal_left_shorter(source_exon, target_exon):
+    #     -------------------
+    #  ----------------------
+
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if a1 > a2 < b1 == b2:
         return True
 
 def is_source_exon_right_longer_left_longer(source_exon, target_exon):
@@ -65,6 +74,14 @@ def is_source_exon_left_equal_right_shorter(source_exon, target_exon):
     a1,b1=target_exon
     a2,b2=source_exon
     if a1 == a2 and b1 > b2:
+        return True
+
+def is_source_exon_left_equal_right_longer(source_exon, target_exon):
+    # --------------------
+    # -----------------------
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if a1 == a2 and b1 < b2:
         return True
 
 def is_source_exon_left_shorter_right_shorter(source_exon, target_exon):
@@ -95,9 +112,20 @@ def is_target_exon_longer(source_exon, target_exon):
 def is_source_exon_in_target_exon(source, target):
     #  -----------   ------------
     #    -------     ------------
-    if source[0] >= target[0] and source[1] <= target[1]:
+    if source[0] >= target[0] < source[1] <= target[1]:
         return True
 
+def is_source_exon_one_end_equal(source_exon, target_exon):
+    # --------------
+    # ----------
+    # or
+    # ----------------
+    #     ------------
+
+    a1,b1=target_exon
+    a2,b2=source_exon
+    if (a1 == a2 and b2 <= b1 ) or (a2 >= a1 and b1==b2):
+        return True
 
 def right_overlap(source, target):
     if source[0] < target[0] and source[1] <= target[1]:
@@ -158,12 +186,11 @@ def all_jxn_match(source_positions, target_positions):
     if len(source_positions) == len(target_positions):
         counter=0
         for i in range(len(source_positions)):
-
-            a1, b1 =  source_positions[i]
-            a2, b2 = target_positions[i]
-
-            if a1 <= b2 and b1 >=a2:
+            if is_source_exon_right_equal_left_longer(source_positions[i], target_positions[i]) or is_exon_exact_match(source_positions[i], target_positions[i]) or is_source_exon_left_equal_right_longer(source_positions[i], target_positions[i]):
                 counter+=1
+            else:
+                pass
+
         if counter==len(source_positions):
             return True
 
@@ -171,10 +198,14 @@ def source_contained(source_positions, target_positions):
     # if not all_jxn_match, lets look other
     total_contained=0
     if len(source_positions) < len(target_positions):
-        for i in range(len(source_positions)):
-            if is_exon_exact_match(target_positions[i], source_positions[i]) or is_source_exon_left_equal_right_shorter(target_positions[i], source_positions[i]) or is_source_exon_right_equal_left_longer(target_positions[i], source_positions[i]):
-                total_contained=0
+        for source_exon in source_positions:
+            for target_exon in target_positions:
 
+                if is_source_exon_in_target_exon(source_exon, target_exon):
+                    total_contained+=1
+                    break
+                else:
+                    continue
         if total_contained == len(source_positions):
             return True
 
@@ -184,8 +215,11 @@ def target_contained(source_positions, target_positions):
 
     for target_exon in target_positions:
         for source_exon in source_positions:
-            if is_source_exon_in_target_exon(target_exon, source_exon):
+            if source_exon[1] < target_exon[0] or source_exon[0] > target_exon[1]:
+                continue
+            if source_exon[0] < target_exon[1] and (is_exon_exact_match(source_exon, target_exon) or is_source_exon_right_equal_left_shorter(source_exon, target_exon) or is_source_exon_left_equal_right_longer(source_exon, target_exon)):
                 total_contained+=1
+                break
             else:
                 pass
     if len(source_positions) >= total_contained and total_contained >=1:
@@ -212,20 +246,23 @@ def novel_retained_intron(source_positions, target_positions):
     total = 0
     novel_retained_intron = 0
     transcript_b_aln_positions_paired = [(target_positions[i-1], target_positions[i]) for i in range(1, len(target_positions))]
-
     for exon1, exon2 in transcript_b_aln_positions_paired:
         for source_exon in source_positions:
-            if source_exon[0] < exon2[1] and is_novel_retained_intron(exon1, exon2, source_exon):
-                novel_retained_intron +=1
-            else:
-                for target_exon in [exon1, exon2]:
-                    if is_exon_exact_match(source_exon, target_exon) or is_source_exon_left_equal(source_exon, target_exon):
-                        total +=1
-                        break
-    if novel_retained_intron > 0 and (total + novel_retained_intron * 2) == lne(target_positions):
+            if is_source_exon_in_target_exon([exon1[1],exon2[0]], source_exon):
+                novel_retained_intron+=1
+                break
+            elif is_source_exon_in_target_exon(source_exon, exon2) or is_source_exon_right_equal_left_longer(source_exon, exon2):
+                print("+2")
+                total+=1
+            elif is_source_exon_in_target_exon(source_exon, exon1) or is_source_exon_left_equal_right_shorter(source_exon, exon1):
+
+                print("+1")
+                total+1
+    print(total, novel_retained_intron)
+    if novel_retained_intron > 0 and (total + novel_retained_intron * 2) == len(target_positions):
         return True
     # test if source might align across all exons and introns of target
-    if len(source_positions)>=2 and is_novel_retained_intron(target_positions[0], target_positions[-1], source_positions):
+    if len(source_positions)==1 and is_novel_retained_intron(target_positions[0], target_positions[-1], source_positions[0]):
         return True
 
 def changed_exon(source_positions, target_positions):
@@ -282,9 +319,6 @@ def homology_analysis(blastAB, blastBA, gffA, gffB):
         list_of_b_genes = speciesA_blast_speciesBgenes[transcript_a].keys()
         for b_gene_aligned_to in speciesA_blast_speciesBgenes[transcript_a].keys():
 
-            print(transcript_a, " aligned to ", b_gene_aligned_to)
-
-
             b_gene_aln_start_pos = speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['start']
             b_gene_aln_end_pos = speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['end']
 
@@ -311,23 +345,26 @@ def homology_analysis(blastAB, blastBA, gffA, gffB):
                 b_gene_chromosome = B_gff_gene_data[b_gene_aligned_to]['chr']
                 b_gene_strand = B_gff_gene_data[b_gene_aligned_to]['strand']
 
-                print(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1)
+                #print(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1)
                 unique_transcript_call = unique_transcript(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1)
                 if unique_transcript_call:
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call']='unique_transcript'
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['category']=unique_transcript_call
-
+                    print(transcript_a, " aligned to ", b_gene_aligned_to, " call ", ' unique_transcript ', unique_transcript_call )
                     continue
 
                 if novel_retained_intron(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call']='novel_retained_intron'
+                    print(transcript_a, " aligned to ", b_gene_aligned_to, " call ", 'novel_retained_intron')
                     continue
 
-                if is_changed_exon_incl_kept_intron(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
-                    speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call']='is_changed_exon_incl_kept_intron'
+                if changed_exon_incl_kept_intron(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
+                    speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call']='changed_exon_incl_kept_intron'
+                    print(transcript_a, " aligned to ", b_gene_aligned_to, " call ", 'changed_exon_incl_kept_intron')
                     continue
                 if changed_exon(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
-                    speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call']='changed_exon'
+                    speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call']='changed_exons'
+                    print(transcript_a, " aligned to ", b_gene_aligned_to, ' call ', ' changed_exons')
                     continue
 
 
