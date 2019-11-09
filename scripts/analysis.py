@@ -114,6 +114,10 @@ def is_source_exon_in_target_exon(source, target):
     #    -------     ------------
     if source[0] >= target[0] < source[1] <= target[1]:
         return True
+    elif target[0] <= source[0] < source[1] <= target[1]:
+        return True
+    else:
+        pass
 
 def is_source_exon_one_end_equal(source_exon, target_exon):
     # --------------
@@ -243,27 +247,47 @@ def novel_retained_intron(source_positions, target_positions):
     # test if transcript a has aligned to intronic region of transcript b,
     # getting pair of exonic positions from transcript b
 
-    total = 0
-    novel_retained_intron = 0
-    transcript_b_aln_positions_paired = [(target_positions[i-1], target_positions[i]) for i in range(1, len(target_positions))]
-    for exon1, exon2 in transcript_b_aln_positions_paired:
-        for source_exon in source_positions:
-            if is_source_exon_in_target_exon([exon1[1],exon2[0]], source_exon):
-                novel_retained_intron+=1
-                break
-            elif is_source_exon_in_target_exon(source_exon, exon2) or is_source_exon_right_equal_left_longer(source_exon, exon2):
-                print("+2")
-                total+=1
-            elif is_source_exon_in_target_exon(source_exon, exon1) or is_source_exon_left_equal_right_shorter(source_exon, exon1):
-
-                print("+1")
-                total+1
-    print(total, novel_retained_intron)
-    if novel_retained_intron > 0 and (total + novel_retained_intron * 2) == len(target_positions):
-        return True
     # test if source might align across all exons and introns of target
-    if len(source_positions)==1 and is_novel_retained_intron(target_positions[0], target_positions[-1], source_positions[0]):
+    if len(source_positions)==1 and is_source_exon_in_target_exon([target_positions[0][0], target_positions[-1][1] ], source_positions[0]):
         return True
+
+    else:
+        total = 0
+        novel_retained_intron = 0
+        total_source_positions=len(source_positions)
+        for target_index_counter in range(len(target_positions)):
+            if target_index_counter + 1 < len(target_positions):
+                target_exon, target_exon1=target_positions[target_index_counter], target_positions[target_index_counter+1]
+            else:
+                target_exon = target_positions[target_index_counter]
+            for source_exon in source_positions:
+
+                if target_index_counter + 1 < len(target_positions) and is_source_exon_in_target_exon([target_exon[1], target_exon1[0]], source_exon):
+                    #print('novel', source_exon, target_exon)
+                    novel_retained_intron+=1
+                    source_positions.remove(source_exon)
+                    target_index_counter +=2
+                    break
+                else:
+                    if is_source_exon_in_target_exon(source_exon, target_exon):
+                        #print('equal', source_exon, target_exon)
+                        total+=1
+                        source_positions.remove(source_exon)
+
+                    elif is_source_exon_left_equal_right_longer(source_exon, target_exon):
+                        #print('left', source_exon, target_exon)
+                        total+=1
+                        source_positions.remove(source_exon)
+
+                    elif is_source_exon_left_equal_right_shorter(source_exon, target_exon):
+                        #print('right',source_exon, target_exon)
+                        total+=1
+                        source_positions.remove(source_exon)
+
+        print(total, novel_retained_intron)
+        if novel_retained_intron > 0 and (total + novel_retained_intron * 2) == len(target_positions):
+            return True
+
 
 def changed_exon(source_positions, target_positions):
     # changed_exon : The source transcript contains exons which overlap target transcript exons but junctions differ
