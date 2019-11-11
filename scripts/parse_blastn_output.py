@@ -49,10 +49,11 @@ def get_blast_data(blast_outfile):
                     transcript_gene_alignment[query][subject][query]['end'].append(query_end)
                     transcript_gene_alignment[query][subject][query]['aln_pos'].append((query_start, query_end))
                     transcript_gene_alignment[query][subject]['perc_identity'].append(perc_identity)
+
                 else:
-                    transcript_gene_alignment[query].update({subject:{'start':[subject_start], 'end':[subject_end], query:{'aln_pos':[(query_start, query_end)], 'start':[query_start], 'end':[query_end]}, 'qstrand':query_strand, 'sstrand':subject_strand, 'perc_identity':[perc_identity]}})
+                    transcript_gene_alignment[query].update({subject:{'start':[subject_start], 'end':[subject_end], query:{'aln_pos':[(query_start, query_end)], 'start':[query_start], 'end':[query_end]}, 'qstrand':query_strand, 'sstrand':subject_strand, 'perc_identity':[perc_identity], 'call': []}})
             else:
-                transcript_gene_alignment[query] = {subject:{'start':[subject_start], 'end':[subject_end], query:{'aln_pos':[(query_start, query_end)], 'start':[query_start], 'end':[query_end]}, 'qstrand':query_strand, 'sstrand':subject_strand, 'perc_identity':[perc_identity]}}
+                transcript_gene_alignment[query] = {subject:{'start':[subject_start], 'end':[subject_end], query:{'aln_pos':[(query_start, query_end)], 'start':[query_start], 'end':[query_end]}, 'qstrand':query_strand, 'sstrand':subject_strand, 'perc_identity':[perc_identity], 'call':[]}}
 
 
     return transcript_gene_alignment

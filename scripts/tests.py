@@ -1,12 +1,16 @@
 import analysis
-from analysis import all_jxn_match, source_contained, target_contained
+import compare_source_target_exons
+from novel_retained_intron import is_novel_retained_intron
+from unique_transcripts import all_jxn_match, source_contained, target_contained
+from changed_exons import is_changed_exon, is_changed_exon_incl_kept_intron
+from gene_start_end_fragments import is_gene_start_overlap, is_gene_end_overlap
 
-if analysis.is_source_exon_left_equal_right_longer((5,12), (5,10)):
+if compare_source_target_exons.is_source_exon_left_equal_right_longer((5,12), (5,10)):
     print("True")
 else:
     print("False")
 
-if analysis.is_source_exon_right_equal_left_longer((10, 20), (8,20)):
+if compare_source_target_exons.is_source_exon_right_equal_left_longer((10, 20), (8,20)):
     print("True")
 else:
     print("False")
@@ -38,7 +42,7 @@ else:
 target_exon=[(1, 25),(35, 50), (60,100), (150, 250), (270, 340)]
 source_exon=[(20,50), (60, 100),(150, 250), (270, 345)]
 
-if analysis.novel_retained_intron(source_exon, target_exon):
+if is_novel_retained_intron(source_exon, target_exon):
     print('novel_retained_intron passed')
 else:
     print('novel_retained_intron failed')
@@ -46,7 +50,7 @@ else:
 target_exon=[(1, 25), (35, 50), (60,100), (150, 250), (270, 340)]
 source_exon=[(1, 25), (40, 100),(150, 250), (270, 345)]
 
-if analysis.novel_retained_intron(source_exon, target_exon):
+if is_novel_retained_intron(source_exon, target_exon):
     print('novel_retained_intron passed')
 else:
     print('novel_retained_intron failed')
@@ -54,7 +58,7 @@ else:
 target_exon=[(1, 25), (35, 50), (60,100), (150, 250), (270, 340),(450, 500)]
 source_exon=[(1, 25), (40, 100),(150, 250), (270, 500)]
 
-if analysis.novel_retained_intron(source_exon, target_exon):
+if is_novel_retained_intron(source_exon, target_exon):
     print('novel_retained_intron passed')
 else:
     print('novel_retained_intron failed')
@@ -62,7 +66,63 @@ else:
 target_exon=[(1, 25), (35, 50), (60,100), (150, 250), (270, 340)]
 source_exon=[(1, 345)]
 
-if analysis.novel_retained_intron(source_exon, target_exon):
+if is_novel_retained_intron(source_exon, target_exon):
     print('novel_retained_intron passed')
 else:
     print('novel_retained_intron failed')
+
+target_exon=[(1, 25),(35, 50), (60,100), (150, 250), (270, 340)]
+source_exon=[(20,55), (60, 100)]
+
+if is_changed_exon_incl_kept_intron(source_exon, target_exon):
+    print('changed_exon_incl_kept_intron passed')
+else:
+    print('changed_exon_incl_kept_intron failed')
+
+target_exon=[(1, 25),(35, 50), (60,100), (150, 250), (270, 340)]
+source_exon=[(20,45)]
+
+if is_changed_exon_incl_kept_intron(source_exon, target_exon):
+    print('changed_exon_incl_kept_intron passed')
+else:
+    print('changed_exon_incl_kept_intron failed')
+
+target_exon=[(1, 25),(35, 50), (60,100), (150, 250), (270, 340)]
+source_exon=[(230, 320),(500, 600)]
+
+if is_changed_exon_incl_kept_intron(source_exon, target_exon):
+    print('changed_exon_incl_kept_intron passed')
+else:
+    print('changed_exon_incl_kept_intron failed')
+
+target_exon=[(1, 25),(35, 50), (60,100), (150, 250), (270, 340)]
+source_exon=[(1, 20),(30, 55), (57,103), (265, 345)]
+
+if is_changed_exon(source_exon, target_exon):
+    print('changed_exon  passed')
+else:
+    print('changed_exon failed')
+
+target_exon=[(1, 25),(35, 50), (60,100), (150, 250), (270, 340)]
+source_exon=[(30, 50), (57,103), (145, 254), (265, 345)]
+
+if is_changed_exon(source_exon, target_exon):
+    print('changed_exon  passed')
+else:
+    print('changed_exon failed')
+
+target_exon=[(35, 50), (60,100), (150, 250), (270, 340)]
+source_exon=[(10, 40)]
+
+if is_gene_start_overlap(source_exon, target_exon):
+    print('gene_start_overlap  passed')
+else:
+    print('gene_start_overlap failed')
+
+target_exon=[(35, 50), (60,100), (150, 250), (270, 340)]
+source_exon=[(290, 400)]
+
+if is_gene_end_overlap(source_exon, target_exon):
+    print('gene_end_overlap  passed')
+else:
+    print('gene_end_overlap failed')
