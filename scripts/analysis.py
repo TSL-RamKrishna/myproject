@@ -22,9 +22,9 @@ from unique_transcripts import unique_transcript
 import compare_source_target_exons
 from gene_start_end_fragments import is_gene_start_overlap, is_gene_end_overlap
 from antisense import is_antisense
+from target_intronic import is_target_intronic
 
 def parse_blast_result(blastfile):
-
     return parse_blastn_output.get_blast_data(blastfile)
 
 def parse_gff_data(gff_file):
@@ -67,7 +67,7 @@ def homology_analysis(blastAB, blastBA, gffA, gffB):
             pass
         else:
             continue
-
+        transcript_aligned_called=False
         transcript_a_gene = A_gff_transcript_data[transcript_a]['gene']
         transcript_a_gene_start = A_gff_gene_data[transcript_a_gene]['start']
         transcript_a_gene_end = A_gff_gene_data[transcript_a_gene]['end']
@@ -90,7 +90,7 @@ def homology_analysis(blastAB, blastBA, gffA, gffB):
 
             #print("transcript ", transcript_a, transcript_aln_pos, " gene ", b_gene_aligned_to, b_gene_aln_pos)
             b_gene_transcript_list = B_gff_gene_data[b_gene_aligned_to]['transcript']
-            aligned_gene_found=False
+
 
             for b_gene_transcript in b_gene_transcript_list:
                 b_gene_transcript_exon_positions = B_gff_gene_data[b_gene_aligned_to][b_gene_transcript]['exon']
@@ -113,43 +113,48 @@ def homology_analysis(blastAB, blastBA, gffA, gffB):
                 if unique_transcript_call:
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call'].append('unique_transcript')
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['category']=unique_transcript_call
-                    print(transcript_a, " aligned to ", b_gene_aligned_to, " call ", ' unique_transcript ', unique_transcript_call )
-                    aligned_gene_found = True
+                    print(transcript_a, b_gene_transcript, transcript_a_gene, b_gene_aligned_to, " call ", ' unique_transcript ', unique_transcript_call )
+                    transcript_aligned_called = True
                     continue
 
                 if is_novel_retained_intron(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call'].append('novel_retained_intron')
-                    print(transcript_a, " aligned to ", b_gene_aligned_to, " call ", 'novel_retained_intron')
-                    aligned_gene_found = True
+                    print(transcript_a, b_gene_transcript, transcript_a_gene,b_gene_aligned_to, " call ", 'novel_retained_intron')
+                    transcript_aligned_called = True
                     continue
 
                 if is_changed_exon_incl_kept_intron(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call'].append('changed_exon_incl_kept_intron')
-                    print(transcript_a, " aligned to ", b_gene_aligned_to, " call ", 'changed_exon_incl_kept_intron')
-                    aligned_gene_found = True
+                    print(transcript_a, b_gene_transcript, transcript_a_gene,b_gene_aligned_to, " call ", 'changed_exon_incl_kept_intron')
+                    transcript_aligned_called = True
                     continue
                 if is_changed_exon(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call'].append('changed_exons')
-                    print(transcript_a, " aligned to ", b_gene_aligned_to, ' call ', ' changed_exons')
-                    aligned_gene_found = True
+                    print(transcript_a, b_gene_transcript, transcript_a_gene,b_gene_aligned_to, ' call ', ' changed_exons')
+                    transcript_aligned_called = True
                     continue
                 if is_gene_start_overlap(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call'].append('gene_start_overlap')
-                    print(transcript_a, " aligned to ", b_gene_aligned_to, ' call ', ' gene_start_overlap')
-                    aligned_gene_found = True
+                    print(transcript_a, b_gene_transcript, transcript_a_gene,b_gene_aligned_to, ' call ', ' gene_start_overlap')
+                    transcript_aligned_called = True
                     continue
                 if is_gene_end_overlap(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call'].append('gene_end_overlap')
-                    print(transcript_a, " aligned to ", b_gene_aligned_to, ' call ', ' gene_end_overlap')
-                    aligned_gene_found = True
+                    print(transcript_a, b_gene_transcript, transcript_a_gene,b_gene_aligned_to, ' call ', ' gene_end_overlap')
+                    transcript_aligned_called = True
                     continue
                 if is_antisense(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1, transcript_a_strand, transcript_b_strand):
                     speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call'].append('antisense')
-                    print(transcript_a, " aligned to ", b_gene_aligned_to, ' call ', 'antisense')
-                    aligned_gene_found = True
+                    print(transcript_a, b_gene_transcript, transcript_a_gene,b_gene_aligned_to, ' call ', 'antisense')
+                    transcript_aligned_called = True
                     continue
-            if aligned_gene_found == False:
-                print(transcript_a, " aligned to ", b_gene_aligned_to, ' call ', ' not found')
+                if is_target_intronic(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
+                    speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to]['call'].append('target_intronic')
+                    print(transcript_a, b_gene_transcript, transcript_a_gene,b_gene_aligned_to, ' call ', 'target_intronic')
+                    transcript_aligned_called = True
+                    continue
+            if transcript_aligned_called == False:
+                print(transcript_a, " ", " ", b_gene_aligned_to, ' call ', ' not found')
 
 
 

@@ -38,25 +38,22 @@ def unique_transcript_call(source_positions, target_positions):
     # if not all_jxn_match, lets look other
     total = 0
     total_source_exons = len(source_positions)
+    first_source_exon_found=False
 
     for source_exon_index in range(len(source_positions)):
         source_exon = source_positions[source_exon_index]
         for target_exon in target_positions:
-            if source_exon_index == 0 and (source_exon[0] < source_exon[1] == target_exon[1]):
+            if first_source_exon_found==False and (source_exon[1] == target_exon[1]):
                 total +=1
-                target_positions.remove(target_exon)
-                continue
+                first_source_exon_found=True
+                break
             elif source_exon_index > 0 and source_exon_index < len(source_positions)-1 and (source_exon[0] == target_exon[0] and source_exon[1] == target_exon[1]):
                 total +=1
-                target_positions.remove(target_exon)
-                continue
-            elif source_exon_index == len(source_positions) -1 and (source_exon[0] == target_exon[0] and source_exon[1] > target_exon[0]):
+                break
+            elif source_exon_index == len(source_positions) -1 and (source_exon[0] == target_exon[0]):
                 total +=1
-                target_positions.remove(target_exon)
-                continue
-            else:
-                pass
-
+                break
+                
     return total
 
 

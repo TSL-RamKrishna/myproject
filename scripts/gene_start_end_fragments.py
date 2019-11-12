@@ -20,5 +20,5 @@ def is_gene_end_overlap(source_positions, target_positions):
     target_last_exon = target_positions[-1]
     source_first_exon = source_positions[0]
 
-    if target_last_exon[0] < source_first_exon[0] < target_last_exon[1] < source_first_exon[1]:
+    if target_last_exon[0] <= source_first_exon[0] < target_last_exon[1] <= source_first_exon[1]:
         return True
