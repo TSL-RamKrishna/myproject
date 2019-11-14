@@ -84,17 +84,25 @@ target_exon=[(1, 25),(35, 50), (60,100), (150, 250), (270, 340)]
 source_exon=[(20,45)]
 
 if is_changed_exon_incl_kept_intron(source_exon, target_exon):
-    print('changed_exon_incl_kept_intron passed')
+    print('changed_exon_incl_kept_intron 1 passed')
 else:
-    print('changed_exon_incl_kept_intron failed')
+    print('changed_exon_incl_kept_intron 1 failed')
 
 target_exon=[(1, 25),(35, 50), (60,100), (150, 250), (270, 340)]
 source_exon=[(230, 320),(500, 600)]
 
 if is_changed_exon_incl_kept_intron(source_exon, target_exon):
-    print('changed_exon_incl_kept_intron passed')
+    print('changed_exon_incl_kept_intron 2 passed')
 else:
-    print('changed_exon_incl_kept_intron failed')
+    print('changed_exon_incl_kept_intron 2 failed')
+
+target_exon=[(1, 25),(35, 50), (60,100), (150, 250), (270, 340)]
+source_exon=[(20,55), (60,100), (230, 350)]
+
+if is_changed_exon_incl_kept_intron(source_exon, target_exon):
+    print('changed_exon_incl_kept_intron 3 passed')
+else:
+    print('changed_exon_incl_kept_intron 3 failed')
 
 target_exon=[(1, 25),(35, 50), (60,100), (150, 250), (270, 340)]
 source_exon=[(1, 20),(30, 55), (57,103), (265, 345)]

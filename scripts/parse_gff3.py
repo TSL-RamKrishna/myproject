@@ -67,7 +67,7 @@ class gff3():
 
             chromosome, feature, feature_id, parent_id, start, end, strand = self.coordinates(line)
             #print(chromosome, feature, feature_id, parent_id, start, end, strand)
-            if 'gene' in feature or 'gene' in feature.lower():
+            if 'gene' in feature.lower():
                 ## no two gene have same id, so just add to dict
                 self.gene_data[feature_id] = {'start':start, 'end':end, 'strand':strand, 'chr':chromosome}
                 last_geneid = feature_id
