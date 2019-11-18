@@ -53,7 +53,7 @@ def unique_transcript_call(source_positions, target_positions):
             elif source_exon_index == len(source_positions) -1 and (source_exon[0] == target_exon[0]):
                 total +=1
                 break
-                
+
     return total
 
 

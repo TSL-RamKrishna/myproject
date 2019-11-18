@@ -56,7 +56,7 @@ class gff3():
         '''
         get start and end positions for all attributes
         '''
-        print("Getting positions")
+        #print("Getting positions")
         openFunc = gzip.open if self.in_file_gff3.endswith('.gz') else open
 
         infile = openFunc(self.in_file_gff3)
@@ -71,7 +71,7 @@ class gff3():
                 ## no two gene have same id, so just add to dict
                 self.gene_data[feature_id] = {'start':start, 'end':end, 'strand':strand, 'chr':chromosome}
                 last_geneid = feature_id
-            elif 'RNA' in feature or 'rna' in feature.lower():
+            elif 'rna' in feature.lower():
                 self.transcript_data[feature_id]={'start':start, 'end': end, 'gene':parent_id   , 'allfeatures': [], 'strand':strand}
                 if 'transcript' in self.gene_data[last_geneid].keys():
                     self.gene_data[last_geneid]['transcript'].append(feature_id)
@@ -80,7 +80,7 @@ class gff3():
 
                 self.gene_data[last_geneid].update({feature_id:{'start':start, 'end':end, 'allfeatures':[]}})
                 last_transcript = feature_id
-            else:
+            elif 'exon' in feature.lower():
                 # add all other features start and end to one array
                 self.transcript_data[last_transcript]['allfeatures'].append((start, end))
                 self.gene_data[last_geneid][last_transcript]['allfeatures'].append((start, end))

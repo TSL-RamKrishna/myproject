@@ -52,6 +52,6 @@ def is_changed_exon(source_positions, target_positions):
                 break
             else:
                 pass
-    #print(junction_match, non_junction_match)
+    #print("junciton match ", junction_match, "non junction match" , non_junction_match)
     if junction_match >= 1 and junction_match + non_junction_match == total_source_positions:
         return True
