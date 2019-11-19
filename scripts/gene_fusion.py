@@ -3,7 +3,7 @@
 from merge_overlapping_intervals import mergeIntervals
 from statistics import mean
 
-from changed_exons import is_changed_exon, is_changed_exon_incl_kept_intron
+from changed_exons import is_changed_exon, is_changed_exon_incl_kept_intron, is_new_exons
 from novel_retained_intron import is_novel_retained_intron
 from unique_transcripts import unique_transcript
 import compare_source_target_exons
@@ -47,6 +47,8 @@ def call_gene_fusion(source_positions, transcript_positions):
         return 'changed_exon_incl_kept_intron'
     if is_changed_exon(source_positions, transcript_positions):
         return 'changed_exons'
+    if is_new_exons(source_positions, transcript_positions):
+        return 'new_exons'
     if is_gene_start_overlap(source_positions, transcript_positions):
         return 'genic_start_overlap'
     if is_gene_end_overlap(source_positions, transcript_positions):

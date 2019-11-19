@@ -12,11 +12,12 @@
 # aligned to A genes, generating two blastn outputs
 
 # Blastn outputs and gff3 files are parsed to python dictionary objects
+import os, sys
 from statistics import mean
 import parse_blastn_output
 from parse_gff3 import gff3
 from merge_overlapping_intervals import mergeIntervals
-from changed_exons import is_changed_exon, is_changed_exon_incl_kept_intron
+from changed_exons import is_changed_exon, is_changed_exon_incl_kept_intron, is_new_exons
 from novel_retained_intron import is_novel_retained_intron
 from unique_transcripts import unique_transcript
 import compare_source_target_exons
@@ -50,7 +51,7 @@ def get_exon_positions_starting_1(chr_exon_positions, chr_transcript_start_pos):
 
     return positions
 
-def homology_analysis(blastAB, A_gff_transcript_data, A_gff_gene_data, B_gff_gene_data, species1name, species2name):
+def homology_analysis(blastAB, A_gff_transcript_data, A_gff_gene_data, B_gff_gene_data, assembly, species1name, species2name):
 
     speciesA_blast_speciesBgenes = parse_blast_result(blastAB)
 
@@ -97,7 +98,7 @@ def homology_analysis(blastAB, A_gff_transcript_data, A_gff_gene_data, B_gff_gen
                             #print(merged_intervals, score, merged_genes, category)
                             #print(transcript_a_allfeatures_positions, merged_intervals, score, merged_genes, category)
 
-                            print(species1name + "\t" + species2name + "\t" + transcript_a + "\t" + 'gene_fusion' + "\t" + str(score) + "\t" + transcript_a_gene + "\t"  + merged_genes +  "\t" + category)
+                            print(species1name + "\t" + species2name + "\t" + transcript_a + "\t" + " " + "\t" + 'gene_fusion' + "\t" + str(score) + "\t" + transcript_a_gene + "\t"  + merged_genes +  "\t" + category)
                             transcript_a_aligned_called=True
 
             for b_gene_aligned_to in speciesA_blast_speciesBgenes[transcript_a].keys():
@@ -163,9 +164,14 @@ def homology_analysis(blastAB, A_gff_transcript_data, A_gff_gene_data, B_gff_gen
                     if is_changed_exon(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
                         speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to][b_gene_transcript]={'call':'absent_transcript'}
                         speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to][b_gene_transcript].update({'category':'changed_exons'})
-                        print(species1name + "\t" + species2name + "\t" + transcript_a + "\t" + b_gene_transcript + "\t" + "\t" + 'absent_transcript' + "\t" + str(transcript_aln_pos_percentidentity) + "\t" + transcript_a_gene + "\t" + b_gene_aligned_to + "\t" + ' changed_exons')
+                        print(species1name + "\t" + species2name + "\t" + transcript_a + "\t" + b_gene_transcript + "\t"  + 'absent_transcript' + "\t" + str(transcript_aln_pos_percentidentity) + "\t" + transcript_a_gene + "\t" + b_gene_aligned_to + "\t" + ' changed_exons')
                         transcript_a_aligned_called = True
                         #return 'changed_exons'
+                    if is_new_exons(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
+                        speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to][b_gene_transcript]={'call':'absent_transcript'}
+                        speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to][b_gene_transcript].update({'category':'new_exons'})
+                        print(species1name + "\t" + species2name + "\t" + transcript_a + "\t" + b_gene_transcript + "\t"  + 'absent_transcript' + "\t" + str(transcript_aln_pos_percentidentity) + "\t" + transcript_a_gene + "\t" + b_gene_aligned_to + "\t" + ' new_exons')
+                        transcript_a_aligned_called = True
                     if is_gene_start_overlap(transcript_a_allfeatures_positions, b_gene_transcript_allfeatures_starting_1):
                         speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to][b_gene_transcript]= {'call':'absent_transcript'}
                         speciesA_blast_speciesBgenes[transcript_a][b_gene_aligned_to][b_gene_transcript].update({'category':'genic_start_overlap'})
@@ -202,8 +208,31 @@ def homology_analysis(blastAB, A_gff_transcript_data, A_gff_gene_data, B_gff_gen
     # if len(transcript_a_not_aligned) >=1:
     #     print('Not aligned transcripts ', transcript_a_not_aligned, file=sys.stderr)
     #     print(len(transcript_a_not_aligned), file=sys.stderr)
-    for intergene in transcript_a_not_aligned:
-        print(species1name + "\t" + species2name + "\t" + intergene + "\t" + " \t" + 'absent_gene' + "\t" + "0" + "\t" + A_gff_transcript_data[transcript_a]['gene'] + " \t" + " \t" + 'intergenic' )
+    not_aligned_file='results/' + species1name + '_unaligned'
+    not_aligned = open(not_aligned_file + ".txt", 'w')
+    for unaligned in transcript_a_not_aligned:
+        #print(species1name + "\t" + species2name + "\t" + intergene + "\t" + " \t" + 'absent_gene' + "\t" + "0" + "\t" + A_gff_transcript_data[transcript_a]['gene'] + " \t" + " \t" + 'intergenic' )
+        not_aligned.write(unaligned + "\n")
+    not_aligned.close()
+
+    # Now get the unaligned transcripts only
+    print("Getting unaligned transcripts for " + species1name)
+    os.system("grep -A1 -w -f " + not_aligned_file + " data/A.transcripts.fasta | egrep -v -e '-{2,5}' > " + not_aligned_file + ".fasta; sleep 10")
+    print('Blasting unaligned transcripts for ' + species1name)
+    os.system('blastn -query ' + not_aligned_file + ".fasta " + ' -db ' + assembly +  ' -evalue 10e-10 -perc_identity 99 -outfmt 6 -out ' + not_aligned_file + ".blastn.txt")
+
+    unaligned_blast = parse_blast_result(not_aligned_file + ".blastn.txt")
+
+    with open(not_aligned_file + ".txt") as unaligned:
+        for transcript in unaligned:
+            transcript=transcript.rstrip()
+            if transcript in unaligned_blast.keys():
+                # this means it matched to unannoted region in the target genome
+                print(species1name + "\t" + species2name + "\t" + transcript + "\t" + " \t" + "absent_genes" + "\t" + A_gff_transcript_data[transcript]['gene'] + "\t" + " \t" + '')
+            else:
+                print(species1name + "\t" + species2name + "\t" + transcript + "\t" + " \t" + "absent_genome" + "\t" + A_gff_transcript_data[transcript]['gene'] + "\t" + " \t" + '')
+
+
 
     #
     # for transcript_a in A_gff_transcript_data.keys():
@@ -267,9 +296,9 @@ if __name__=='__main__':
     B_gff_transcript_data, B_gff_gene_data = parse_gff_data('data/B.gff3')
 
     print('Reading ' + options.species1name + ' aligned to ' + options.species2name + ' Blast result', file=sys.stderr)
-    homology_analysis("results/A_transcripts_align_Bgenes.txt", A_gff_transcript_data, A_gff_gene_data, B_gff_gene_data, options.species1name, options.species2name)
+    homology_analysis("results/A_transcripts_align_Bgenes.txt", A_gff_transcript_data, A_gff_gene_data, B_gff_gene_data, options.species1assembly, options.species1name, options.species2name)
     print('Reading ' + options.species2name + ' aligned to ' + options.species1name + ' Blast result', file=sys.stderr)
-    homology_analysis("results/B_transcripts_align_Agenes.txt", B_gff_transcript_data, B_gff_gene_data, A_gff_gene_data, options.species2name, options.species1name)
+    homology_analysis("results/B_transcripts_align_Agenes.txt", B_gff_transcript_data, B_gff_gene_data, A_gff_gene_data, options.species2assembly, options.species2name, options.species1name)
 
 
     exit(0)
