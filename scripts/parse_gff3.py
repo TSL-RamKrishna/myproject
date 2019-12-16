@@ -90,7 +90,23 @@ class gff3():
                 else:
                     self.gene_data[last_geneid][last_transcript].update({feature:[(start,end)]})
 
+    def get_transcript_gene(self):
+        '''
+        get start and end positions for all attributes
+        '''
+        #print("Getting positions")
+        openFunc = gzip.open if self.in_file_gff3.endswith('.gz') else open
 
+        infile = openFunc(self.in_file_gff3)
+        for line in infile:
+
+            if line.startswith("#") or line.rstrip() == "":
+                continue
+
+            chromosome, feature, feature_id, parent_id, start, end, strand = self.coordinates(line)
+            #print(chromosome, feature, feature_id, parent_id, start, end, strand)
+            if 'rna' in feature.lower():
+                self.transcript_data[feature_id]=parent_id
 
     def save_coordinates(self, outfilename):
         '''

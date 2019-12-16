@@ -64,12 +64,12 @@ def is_new_exons(source_positions, target_positions):
     for target_exon in target_positions:
         for source_exon in source_positions:
 
-            if source_exon[0] == target_exon[0] or  source_exon[1] ==target_exon[1]:
+            if source_exon[0] > target_exon[0] and source_exon[1] < target_exon[1]:
                 junction_match +=1
                 source_positions.remove(source_exon)
                 break
             else:
                 pass
     #print("junciton match ", junction_match, "non junction match" , non_junction_match)
-    if junction_match == 0:
+    if junction_match > 0:
         return True
